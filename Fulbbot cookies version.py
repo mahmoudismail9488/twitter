@@ -752,10 +752,8 @@ canvas4.pack(fill = "both", expand = True)
 canvas4.create_image( 0, 0, image = bg_img, anchor = "nw")
 #other functions accounts file 
 my_tokens_2=[]
-api_num2=[]
 def browseFiles_others():
     my_tokens_2.clear()
-    api_num2.clear()
     filename = filedialog.askopenfilename(initialdir = "./",title = "Select a File",filetypes = (("Text files","*.txt*"),("all files","*.*")))
     file_ent3.configure(text=f"{filename}")
     try:
@@ -763,8 +761,7 @@ def browseFiles_others():
             my_lines = api_file.readlines()
             for i in my_lines:
                 dic = json.loads(i)
-                my_tokens_2.append(dic) 
-            api_num2.append(my_tokens_2[0]["ID"]-1)    
+                my_tokens_2.append(dic)     
     except:
         messagebox.showwarning("warning","you must add the path of the file")
 
@@ -897,7 +894,52 @@ def browseFiles_scraper():
 file_btn_scrap = Button(me,text="Choose file",bg="black",fg="white",font="FangSong 12",command=browseFiles_scraper,width=16,padx=0)
 file_ent_scrap= Label(me,text="",fg="white",bg="#1B9DF0",wraplength=240)
 def scrap():
-    text_area3.delete("1.0","end")
+    my_time=float(time_lbl.cget("text"))
+    # read followers file 
+    with open("./my files/scraper/followers.txt","r") as scrapped:
+        scraper_reader = scrapped.readlines()
+    already_scrapped = []
+    for i in scraper_reader:
+        already_scrapped.append(i.strip())    
+    # read usernames file
+    with open(file_ent_scrap.cget("text"),"r") as users_file:
+        reader = users_file.readlines()
+    # login with any account to have the access to anyone followers
+    chrome_options = Options()
+    #chrome_options.add_argument("--headless")
+    args = ["hide_console" ]
+    driver = webdriver.Chrome("./my files/main/chromedriver.exe", service_args=args,chrome_options=chrome_options)  
+    driver.set_window_size(600,1000)
+    driver.implicitly_wait(10)
+    driver.get("https://twitter.com/")    
+    for i in reader:
+        user = random.randint(0,len(my_tokens_2)-1)
+        text_area3.insert(END,f"start adding cookies of account: {my_tokens_2[user]['Name']}\n")
+        me.update()
+        for c in my_tokens_2[user]["Cookies"]:
+            driver.add_cookie(c)
+        driver.get(f"https://twitter.com/{i.strip()}/followers")
+        #get the hieght of the page and scroll down unit end
+        match=False
+        scroll_limit = random.randint(5,50)
+        t=0
+        list_of_followers = []
+        text_area3.insert(END,f"start scraping followers of: {i.strip()}\n")
+        me.update()
+        while t<=scroll_limit:
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            t=t+1
+            time.sleep(2)    
+            all_followers=driver.find_elements("xpath","//div[@data-testid='UserCell']")
+            with open("./my files/scraper/followers.txt","a") as followers_file:
+                for n in range(1,len(all_followers)):
+                    user = driver.find_element("xpath",f"/html/body/div[1]/div/div/div[2]/main/div/div/div/div/div/section/div/div/div[{n}]/div/div/div/div/div[2]/div[1]/div[1]/div/div[2]/div/a").get_attribute("href").strip("/").split("/")[-1]
+                    if user not in list_of_followers and user not in already_scrapped:
+                        list_of_followers.append(user)
+                        followers_file.write(f"{user}\n") 
+        text_area3.insert(END,f"Finished scraping followers of: {i.strip()}\n")
+        me.update() 
+        time.sleep(my_time)               
                   
 def thread_start_scrap():
     threading.Thread(target=scrap).start()
