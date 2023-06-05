@@ -1009,7 +1009,8 @@ def change_bio_name():
             except Exception as e:
                 text_area3.insert(END,e)
                 me.update() 
-                text_area3.see("end")    
+                text_area3.see("end")   
+            time.sleep(my_time)     
 def thread_start_change_bio_name():
     threading.Thread(target=change_bio_name).start()
 start_check_btn3 = Button(me,text="Start",bg="black",fg="white",font="FangSong 14",command=thread_start_change_bio_name,width=14,padx=0)
