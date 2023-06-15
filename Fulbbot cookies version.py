@@ -603,7 +603,7 @@ def retweet_tweet():
                 for i in my_tokens1:
                     try:
                         chrome_options = Options()
-                        chrome_options.add_argument("--headless")
+                        #chrome_options.add_argument("--headless")
                         args = ["hide_console" ]
                         driver = webdriver.Chrome("./my files/main/chromedriver.exe", service_args=args,chrome_options=chrome_options)  
                         driver.set_window_size(600,1000)
@@ -843,7 +843,13 @@ def check():
                         try:
                             text_area3.insert(END,f"{i['Name']} is suspended\n")
                         except:
-                            text_area3.insert(END,f"{i[0]} is suspended\n")   
+                            text_area3.insert(END,f"{i[0]} is suspended\n")
+                    elif state.count("doesn’t exist") == 1:
+                        inactive.append(i)
+                        try:
+                            text_area3.insert(END,f"{i['Name']} doesn’t exist\n")
+                        except:
+                            text_area3.insert(END,f"{i[0]} doesn’t exist\n")           
                     else:
                         active.append(i) 
                         try:
@@ -862,13 +868,22 @@ def check():
             text_area3.see("end")
         with open("./my files/checker/active.txt","w",encoding="utf-8") as active_file:
             for i in active:
-                active_file.writelines(f"{':'.join(i)}\n")
+                if type(i).__name__ == "dict":
+                    active_file.write(f"{i}")
+                else:    
+                    active_file.write(f"{':'.join(i)}\n")
         with open("./my files/checker/restricted.txt","w",encoding="utf-8") as restricted_file:
             for i in restricted:
-                restricted_file.writelines(f"{':'.join(i)}\n")
+                if type(i).__name__ == "dict":
+                    restricted_file.write(f"{i}")
+                else:    
+                    restricted_file.write(f"{':'.join(i)}\n")
         with open("./my files/checker/suspended.txt","w",encoding="utf-8") as suspended_file:
             for i in inactive:
-                suspended_file.writelines(f"{':'.join(i)}\n")
+                if type(i).__name__ == "dict":
+                    suspended_file.write(f"{i}")
+                else:    
+                    suspended_file.write(f"{':'.join(i)}\n")
         text_area3.insert(END,"Finished,see you soon\n") 
         me.update()    
         text_area3.see("end")
@@ -896,6 +911,7 @@ file_ent_scrap= Label(me,text="",fg="white",bg="#1B9DF0",wraplength=240)
 def scrap():
     try:
         my_time=float(time_lbl.cget("text"))
+        text_area3.delete("1.0","end")
         # read followers file 
         with open("./my files/scraper/followers.txt","r") as scrapped:
             scraper_reader = scrapped.readlines()
@@ -974,7 +990,7 @@ def change_bio_name():
             reader = text_file.readlines()
         # login with any account to have the access to anyone followers
         chrome_options = Options()
-        #chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         args = ["hide_console" ]
         driver = webdriver.Chrome("./my files/main/chromedriver.exe", service_args=args,chrome_options=chrome_options)  
         driver.set_window_size(600,1000)
@@ -1026,28 +1042,76 @@ messaging = Label(me,text=" Send Message ",fg="white",bg="#1B9DF0",font="FangSon
 def browseFiles_message():
     filename = filedialog.askopenfilename(initialdir = "./",title = "Select a File",filetypes = (("Text files","*.txt*"),("all files","*.*")))
     file_ent_message.configure(text=f"{filename}")
-file_btn_message = Button(me,text="Ids file",bg="black",fg="white",font="FangSong 12",command=browseFiles_message,width=16,padx=0)
+file_btn_message = Button(me,text="Users file",bg="black",fg="white",font="FangSong 12",command=browseFiles_message,width=16,padx=0)
 file_ent_message= Label(me,text="",fg="white",bg="#1B9DF0",wraplength=240)
-# file of messages
-def browseFiles_message_text():
-    filename = filedialog.askopenfilename(initialdir = "./",title = "Select a File",filetypes = (("Text files","*.txt*"),("all files","*.*")))
-    file_ent_message_text.configure(text=f"{filename}")
-file_btn_message_text = Button(me,text="message file",bg="black",fg="white",font="FangSong 12",command=browseFiles_message_text,width=16,padx=0)
-file_ent_message_text= Label(me,text="",fg="white",bg="#1B9DF0",wraplength=240)
+# text area of message
+msg_area_2 = Text(me,width=25,height=4)
 def start_messaging():
     my_time=float(time_lbl.cget("text"))
     text_area3.delete("1.0","end")
-    
+    # get the users from users file 
+    with open(file_ent_message.cget("text"),"r") as users_file:
+        users_reader = users_file.readlines()
+    # start sending messages
+    i=0
+    u=0
+    while u < len(users_reader):
+        if i == len(my_tokens_2):
+            i=0
+        try:
+            # start logging with account
+            chrome_options = Options()
+            chrome_options.add_argument("--headless")
+            args = ["hide_console" ]
+            driver = webdriver.Chrome("./my files/main/chromedriver.exe", service_args=args,chrome_options=chrome_options)
+            driver.set_window_size(600,1000)
+            driver.implicitly_wait(10)
+            driver.get("https://twitter.com")
+            text_area3.insert(END,f"start adding cookies of account: {my_tokens_2[i]['Name']}\n")
+            me.update()
+            text_area3.see("end")
+            for c in my_tokens_2[i]["Cookies"]:
+                driver.add_cookie(c)
+            driver.get("https://twitter.com/messages/compose")
+            time.sleep(10)
+            text_area3.insert(END,f"Start sending to:{users_reader[u].strip()}\n")
+            me.update() 
+            text_area3.see("end")
+            driver.find_element("xpath","//input[@data-testid='searchPeople']").send_keys(users_reader[u].strip())
+            try:
+                user = driver.find_element("xpath","/html/body/div[1]/div/div/div[2]/main/div/div/div[2]/div/div/div/div/form/div[2]/div/div[2]/div/div/div/div[2]/div/div/div/div[2]/div/div/div/span")
+                if user.text.strip("@") == users_reader[u].strip():
+                    user.click()
+                    driver.find_element("xpath","//div[@data-testid='nextButton']").click()
+                    driver.find_element("xpath","//div[@data-testid='dmComposerTextInput']").send_keys(msg_area_2.get("1.0","end"))
+                    driver.find_element("xpath","//div[@data-testid='dmComposerSendButton']").click()
+                    text_area3.insert(END,f"message sent to:{users_reader[u].strip()}\n")
+                    me.update() 
+                    text_area3.see("end")
+            except:
+                user = driver.find_element("xpath","html/body/div[1]/div/div/div[2]/main/div/div/div[2]/div/div/div/div/form/div[2]/div/div[2]/div/div/div/div[2]/div/div/div[2]/span")
+                text_area3.insert(END,f"can't send the message\n")
+                me.update() 
+                text_area3.see("end")        
+            time.sleep(10)
+        except Exception as e:
+            text_area3.insert(END,e)
+            me.update() 
+            text_area3.see("end")    
+        i=i+1
+        u=u+1
+        text_area3.insert(END,f"Finished\n")
+        me.update() 
+        text_area3.see("end")
 def thread_start_messaging():
     threading.Thread(target=start_messaging).start()    
 start_message_btn = Button(me,text="Start",bg="black",fg="white",font="FangSong 14",command=thread_start_messaging,width=14,padx=0)
 # layout
 canvas4.create_window(765,105,anchor="nw",window=messaging)
-canvas4.create_window(780,130,anchor="nw",window=file_btn_message)
-canvas4.create_window(760,165,anchor="nw",window=file_ent_message)
-canvas4.create_window(780,200,anchor="nw",window=file_btn_message_text)
-canvas4.create_window(760,235,anchor="nw",window=file_ent_message_text)
-canvas4.create_window(780,280,anchor="nw",window=start_message_btn)
+canvas4.create_window(765,130,anchor="nw",window=msg_area_2)
+canvas4.create_window(790,200,anchor="nw",window=file_btn_message)
+canvas4.create_window(755,235,anchor="nw",window=file_ent_message)
+canvas4.create_window(785,280,anchor="nw",window=start_message_btn)
 #################################################################
 #others 
 canvas4.create_window(15,10,anchor="nw",window=file_btn3)
@@ -1090,6 +1154,44 @@ folder_ent_check1= Label(me,text="",fg="white",bg="#1B9DF0",wraplength=200)
 def change_prf():
     my_time=float(time_lbl.cget("text"))
     text_area4.delete("1.0","end")
+    try:
+        dir_list = os.listdir(folder_ent_check1.cget("text"))
+    except Exception as e:
+            text_area4.insert(END,f"{e}\n")
+            me.update()
+    for i in my_tokens_2:
+        try:
+            text_area4.insert(END,f"Start changing {i['Name']} pic...\n")
+            me.update()
+            text_area4.see("end")
+            time.sleep(5)
+            n = random.randint(0,len(dir_list)-1)
+            chrome_options = Options()
+            #chrome_options.add_argument("--headless")
+            args = ["hide_console" ]
+            driver = webdriver.Chrome("./my files/main/chromedriver.exe", service_args=args,chrome_options=chrome_options)  
+            driver.set_window_size(600,1000)
+            driver.implicitly_wait(5)
+            driver.get("https://twitter.com/")
+            text_area4.insert(END,f"start adding cookies of account: {i['Name']}\n")
+            me.update()
+            for c in i["Cookies"]:
+                driver.add_cookie(c)
+            driver.get("https://twitter.com/settings/profile")    
+            driver.find_elements("xpath","//input[@data-testid='fileInput']")[1].send_keys(folder_ent_check1.cget("text")+"/"+dir_list[n])
+            time.sleep(1)
+            driver.find_element("xpath","//div[@data-testid='applyButton']").click()
+            time.sleep(1)
+            driver.find_element("xpath","//div[@data-testid='Profile_Save_Button']").click()
+            text_area4.insert(END,f"{i['Name']} pic changed to {dir_list[n]}\n")
+            me.update()
+            text_area4.see("end")
+        except Exception as e:
+            text_area4.insert(END,f"{e}\n")
+            me.update()    
+        time.sleep(my_time)    
+    text_area4.insert(END,f"Finished")
+    
     
 def thread_start_change_prf():
     threading.Thread(target=change_prf).start()    
@@ -1111,6 +1213,43 @@ folder_ent_check2= Label(me,text="",fg="white",bg="#1B9DF0",wraplength=230)
 def change_banner():
     my_time=float(time_lbl.cget("text"))
     text_area4.delete("1.0","end")
+    try:
+        dir_list = os.listdir(folder_ent_check2.cget("text"))
+    except Exception as e:
+            text_area4.insert(END,f"{e}\n")
+            me.update()
+    for i in my_tokens_2:
+        try:
+            text_area4.insert(END,f"Start changing {i['Name']} banner...\n")
+            me.update()
+            text_area4.see("end")
+            time.sleep(5)
+            n = random.randint(0,len(dir_list)-1)
+            chrome_options = Options()
+            #chrome_options.add_argument("--headless")
+            args = ["hide_console" ]
+            driver = webdriver.Chrome("./my files/main/chromedriver.exe", service_args=args,chrome_options=chrome_options)  
+            driver.set_window_size(600,1000)
+            driver.implicitly_wait(5)
+            driver.get("https://twitter.com/")
+            text_area4.insert(END,f"start adding cookies of account: {i['Name']}\n")
+            me.update()
+            for c in i["Cookies"]:
+                driver.add_cookie(c)
+            driver.get("https://twitter.com/settings/profile")    
+            driver.find_elements("xpath","//input[@data-testid='fileInput']")[0].send_keys(folder_ent_check2.cget("text")+"/"+dir_list[n])
+            time.sleep(1)
+            driver.find_element("xpath","//div[@data-testid='applyButton']").click()
+            time.sleep(1)
+            driver.find_element("xpath","//div[@data-testid='Profile_Save_Button']").click()
+            text_area4.insert(END,f"{i['Name']} banner changed to {dir_list[n]}\n")
+            me.update()
+            text_area4.see("end")
+        except Exception as e:
+            text_area4.insert(END,f"{e}\n")
+            me.update()    
+        time.sleep(my_time)    
+    text_area4.insert(END,f"Finished")
     
 def thread_start_change_banner():
     threading.Thread(target=change_banner).start()    
